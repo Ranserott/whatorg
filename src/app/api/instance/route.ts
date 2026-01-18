@@ -71,8 +71,11 @@ export async function POST(request: NextRequest) {
 
     try {
       await setWebhook(instanceName, webhookUrl)
+      console.log('[Instance] Webhook configured successfully')
     } catch (error: any) {
       console.error('[Instance] Failed to set webhook:', error)
+      // Webhook failure is not blocking - instance will work without it
+      // Messages just won't be received automatically
     }
 
     // Update user with instance info
