@@ -7,7 +7,7 @@ WORKDIR /app
 FROM base AS deps
 COPY package.json package-lock.json* ./
 COPY prisma ./prisma
-RUN npm ci
+RUN npm ci --omit=dev
 
 # Builder stage
 FROM base AS builder
@@ -34,10 +34,9 @@ COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/docker-entrypoint.sh ./docker-entrypoint.sh
+COPY --from=builder /app/node_modules/.bin/prisma ./node_modules/.bin/prisma
 
-RUN chmod +x docker-entrypoint.sh
-
+# Create a simple entrypoint that doesn't run migrations (run them manually once)
 USER nextjs
 
 EXPOSE 3000
@@ -45,5 +44,4 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-ENTRYPOINT ["./docker-entrypoint.sh"]
 CMD ["node", "server.js"]
