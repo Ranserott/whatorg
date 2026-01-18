@@ -1,0 +1,75 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  username      String    @unique
+  passwordHash  String
+  name          String?
+  role          UserRole  @default(USER)
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Instance Management (one instance per user)
+  instanceName  String?   @unique // Name of the user's Evolution API instance
+  instanceStatus String?  // 'open', 'close', 'connecting', etc.
+  instanceQr     String?   // Base64 encoded QR code
+  pairingCode     String?   // Pairing code for easier connection
+
+  messages      Message[]
+
+  @@index([username])
+  @@index([role])
+  @@index([instanceName])
+  @@map("users")
+}
+
+model Message {
+  id           String      @id @default(cuid())
+  whatsappId   String      @unique
+  content      String?
+  senderName   String?
+  senderNumber String
+  instanceName String
+  type         MessageType
+  direction    Direction
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  // Link to user who owns this message
+  userId       String
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, instanceName, createdAt])
+  @@index([userId, senderNumber, createdAt])
+  @@index([createdAt])
+  @@map("messages")
+}
+
+enum UserRole {
+  ADMIN
+  USER
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  AUDIO
+  VIDEO
+  DOCUMENT
+  STICKER
+  LOCATION
+  CONTACT
+}
+
+enum Direction {
+  INCOMING
+  OUTGOING
+}
