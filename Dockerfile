@@ -3,11 +3,11 @@ FROM node:20-alpine AS base
 RUN apk add --no-cache openssl
 WORKDIR /app
 
-# Dependencies stage
+# Dependencies stage - install ALL dependencies (including dev) for build
 FROM base AS deps
 COPY package.json package-lock.json* ./
 COPY prisma ./prisma
-RUN npm ci --omit=dev
+RUN npm ci
 
 # Builder stage
 FROM base AS builder
@@ -20,6 +20,11 @@ RUN npx prisma generate
 # Build Next.js app
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
+
+# Production dependencies stage - only production deps
+FROM base AS prod-deps
+COPY package.json package-lock.json* ./
+RUN npm ci --omit=dev
 
 # Runner stage
 FROM base AS runner
@@ -34,9 +39,10 @@ COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/node_modules/.bin/prisma ./node_modules/.bin/prisma
 
-# Create a simple entrypoint that doesn't run migrations (run them manually once)
+# Copy production node_modules from prod-deps stage
+COPY --from=prod-deps /app/node_modules ./node_modules
+
 USER nextjs
 
 EXPOSE 3000
