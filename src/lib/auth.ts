@@ -11,6 +11,8 @@ export const authConfig: NextAuthConfig = {
   pages: {
     signIn: '/login',
   },
+  // Allow all hosts in production (required for Dokploy/Traefik)
+  trustHost: true,
   providers: [
     Credentials({
       name: 'credentials',
