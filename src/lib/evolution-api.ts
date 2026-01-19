@@ -14,10 +14,10 @@ export interface CreateInstanceResponse {
     instanceName: string
     status: string
   }
-  qr?: {
+  qrcode?: {
     base64: string
     code: string
-    pairingCode: string
+    pairingCode: string | null
   }
 }
 
