@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       user,
-      qr: instanceData.qr,
+      qr: instanceData.qrcode,
       message: 'Instance created successfully'
     })
 
