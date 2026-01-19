@@ -84,8 +84,8 @@ export async function POST(request: NextRequest) {
       data: {
         instanceName,
         instanceStatus: instanceData.instance.status,
-        instanceQr: instanceData.qr?.base64 || null,
-        pairingCode: instanceData.qr?.pairingCode || null
+        instanceQr: instanceData.qrcode?.base64 || null,
+        pairingCode: instanceData.qrcode?.pairingCode || instanceData.qrcode?.code || null
       },
       select: {
         id: true,
