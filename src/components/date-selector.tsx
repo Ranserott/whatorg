@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react'
-import { format, addDays, subDays, isToday } from 'date-fns'
+import { format, addDays, subDays, isToday, parseISO } from 'date-fns'
 
 interface DateInfo {
   date: string
@@ -34,19 +34,19 @@ export function DateSelector({ selectedDate, onDateChange }: DateSelectorProps) 
   }
 
   const goToPreviousDay = () => {
-    const currentDate = new Date(selectedDate)
+    const currentDate = parseISO(selectedDate)
     const previousDay = subDays(currentDate, 1)
     onDateChange(format(previousDay, 'yyyy-MM-dd'))
   }
 
   const goToNextDay = () => {
-    const currentDate = new Date(selectedDate)
+    const currentDate = parseISO(selectedDate)
     const nextDay = addDays(currentDate, 1)
     onDateChange(format(nextDay, 'yyyy-MM-dd'))
   }
 
   const canGoNext = () => {
-    return !isToday(new Date(selectedDate))
+    return !isToday(parseISO(selectedDate))
   }
 
   const hasDateMessages = (dateStr: string) => {

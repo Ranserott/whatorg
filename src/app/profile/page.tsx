@@ -283,15 +283,8 @@ export default function ProfilePage() {
                               3. Toca "Conectar un aparato"
                             </p>
                             <p className="text-xs text-slate-500">
-                              4. Escanea el código o ingresa el pairing code
+                              4. Escanea el código QR
                             </p>
-                            {user.pairingCode && (
-                              <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-md">
-                                <p className="text-xs text-blue-800">
-                                  Código: <code className="font-mono font-bold">{user.pairingCode}</code>
-                                </p>
-                              </div>
-                            )}
                           </div>
                         </div>
                       </div>
