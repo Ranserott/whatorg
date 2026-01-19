@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { startOfDay, endOfDay } from 'date-fns'
+import { startOfDay, endOfDay, parseISO } from 'date-fns'
 
 export async function GET(request: NextRequest) {
   try {
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
 
     // Date filter
     if (dateParam) {
-      const targetDate = new Date(dateParam)
+      const targetDate = parseISO(dateParam)
       whereClause.createdAt = {
         gte: startOfDay(targetDate),
         lte: endOfDay(targetDate)
