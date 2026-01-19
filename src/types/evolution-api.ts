@@ -71,6 +71,7 @@ export interface CreateMessageData {
   instanceName: string
   type: MessageType
   direction: Direction
+  createdAt?: Date
 }
 
 // Dashboard response types

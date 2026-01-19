@@ -117,8 +117,7 @@ function LoginForm() {
 
           {/* Info */}
           <div className="mt-6 pt-6 border-t border-blue-100 text-center text-sm text-slate-500">
-            <p>Usa <code className="bg-slate-100 px-2 py-1 rounded">admin</code> / <code className="bg-slate-100 px-2 py-1 rounded">admin123</code> para acceder
-          </p>
+            <p>Contacta al administrador para obtener acceso</p>
           <p className="text-xs mt-2 text-slate-400">
             Evolution API: <a href="https://what.ranserot.xyz" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">what.ranserot.xyz</a>
           </p>

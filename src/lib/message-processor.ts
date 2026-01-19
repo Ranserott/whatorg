@@ -102,6 +102,13 @@ export function extractMessageData(
   const content = getMessageContent(data)
   const senderName = getSenderName(data)
 
+  // Use message timestamp from webhook (Unix timestamp in seconds)
+  // If not available, Prisma will use the default (current time)
+  let createdAt: Date | undefined
+  if (data.messageTimestamp) {
+    createdAt = new Date(data.messageTimestamp * 1000) // Convert seconds to milliseconds
+  }
+
   return {
     whatsappId,
     content,
@@ -109,7 +116,8 @@ export function extractMessageData(
     senderNumber,
     instanceName,
     type,
-    direction
+    direction,
+    createdAt
   }
 }
 

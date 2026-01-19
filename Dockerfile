@@ -1,6 +1,8 @@
 # Base stage - dependencies
 FROM node:20-alpine AS base
-RUN apk add --no-cache openssl
+RUN apk add --no-cache openssl tzdata
+ENV TZ=America/Santiago
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 WORKDIR /app
 
 # Dependencies stage - install ALL dependencies

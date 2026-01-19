@@ -26,7 +26,6 @@ async function main() {
       }
     })
     console.log('Created admin user:', admin.username)
-    console.log('Default password: admin123')
     console.log('⚠️  Please change the password after first login!')
   }
 
@@ -47,7 +46,6 @@ async function main() {
       }
     })
     console.log('Created test user:', testUser.username)
-    console.log('Default password: test123')
   }
 
   console.log('Database seed completed!')
