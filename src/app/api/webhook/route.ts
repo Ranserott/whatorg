@@ -58,6 +58,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ received: true, status: 'no_data' })
     }
 
+    // Debug: log the timestamp info
+    console.log(`[Webhook] User ${user.id}: messageTimestamp from webhook: ${payload.data.messageTimestamp}`)
+    console.log(`[Webhook] User ${user.id}: createdAt to be saved: ${messageData.createdAt?.toISOString() || 'undefined (will use now())'}`)
+
     // Check for duplicate messages
     const existing = await prisma.message.findUnique({
       where: { whatsappId: messageData.whatsappId }
@@ -82,7 +86,9 @@ export async function POST(request: NextRequest) {
           `Instance: ${instanceName} | ` +
           `From: ${messageData.senderNumber} | ` +
           `Type: ${messageData.type} | ` +
-          `Direction: ${messageData.direction}`
+          `Direction: ${messageData.direction} | ` +
+          `CreatedAt (DB): ${saved.createdAt.toISOString()} | ` +
+          `CreatedAt (Chile): ${saved.createdAt.toLocaleString('es-CL', { timeZone: 'America/Santiago' })}`
         )
       })
       .catch((error) => {
