@@ -46,16 +46,30 @@ export function DateSelector({ selectedDate, onDateChange }: DateSelectorProps) 
   }
 
   const canGoNext = () => {
-    return !isToday(parseISO(selectedDate))
+    const selected = parseISO(selectedDate)
+    const now = new Date()
+    // Get current date in Chile timezone
+    const chileNow = new Date(now.toLocaleString('en-US', { timeZone: 'America/Santiago' }))
+    const chileToday = new Date(chileNow.getFullYear(), chileNow.getMonth(), chileNow.getDate())
+    const selectedDay = new Date(selected.getFullYear(), selected.getMonth(), selected.getDate())
+    return selectedDay < chileToday
   }
 
   const hasDateMessages = (dateStr: string) => {
     return availableDates.some(d => d.date === dateStr)
   }
 
+  const isTodayInChile = (date: Date) => {
+    const now = new Date()
+    const chileNow = new Date(now.toLocaleString('en-US', { timeZone: 'America/Santiago' }))
+    const chileToday = new Date(chileNow.getFullYear(), chileNow.getMonth(), chileNow.getDate())
+    const compareDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+    return compareDate.getTime() === chileToday.getTime()
+  }
+
   const getDisplayDate = () => {
     const date = new Date(selectedDate)
-    if (isToday(date)) return 'Hoy'
+    if (isTodayInChile(date)) return 'Hoy'
     return format(date, 'dd MMM yyyy')
   }
 
@@ -135,7 +149,7 @@ export function DateSelector({ selectedDate, onDateChange }: DateSelectorProps) 
                     }`}
                   >
                     <span className="text-sm text-slate-700">
-                      {isToday(new Date(dateInfo.date))
+                      {isTodayInChile(new Date(dateInfo.date))
                         ? 'Hoy'
                         : format(new Date(dateInfo.date), 'dd MMM yyyy')
                       }

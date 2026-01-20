@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { ChatSidebar } from '@/components/chat-sidebar'
@@ -17,9 +17,17 @@ export const dynamic = 'force-dynamic'
 
 export default function HomePage() {
   const { data: session } = useSession()
-  const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'))
+  const [selectedDate, setSelectedDate] = useState<string>('')
   const [selectedContact, setSelectedContact] = useState<string | null>(null)
   const [selectedContactName, setSelectedContactName] = useState<string | null>(null)
+
+  // Get current date in Chile timezone on mount
+  useEffect(() => {
+    const now = new Date()
+    // Format in Chile timezone
+    const chileDate = new Date(now.toLocaleString('en-US', { timeZone: 'America/Santiago' }))
+    setSelectedDate(format(chileDate, 'yyyy-MM-dd'))
+  }, [])
 
   const handleContactSelect = async (contactNumber: string) => {
     setSelectedContact(contactNumber)
