@@ -11,13 +11,17 @@ import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { MessageSquare, User, Shield, Settings, LogOut } from 'lucide-react'
-import { format } from 'date-fns'
+import { formatInTimeZone } from 'date-fns-tz'
 
 export const dynamic = 'force-dynamic'
 
 export default function HomePage() {
   const { data: session } = useSession()
-  const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'))
+  // Always use Chile timezone for date initialization
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const now = new Date()
+    return formatInTimeZone(now, 'America/Santiago', 'yyyy-MM-dd')
+  })
   const [selectedContact, setSelectedContact] = useState<string | null>(null)
   const [selectedContactName, setSelectedContactName] = useState<string | null>(null)
 

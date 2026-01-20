@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react'
-import { format, addDays, subDays, isToday, parseISO } from 'date-fns'
+import { format, addDays, subDays, parseISO } from 'date-fns'
+import { formatInTimeZone } from 'date-fns-tz'
 
 interface DateInfo {
   date: string
@@ -14,6 +15,8 @@ interface DateSelectorProps {
   selectedDate: string
   onDateChange: (date: string) => void
 }
+
+const CHILE_TIMEZONE = 'America/Santiago'
 
 export function DateSelector({ selectedDate, onDateChange }: DateSelectorProps) {
   const [availableDates, setAvailableDates] = useState<DateInfo[]>([])
@@ -46,29 +49,32 @@ export function DateSelector({ selectedDate, onDateChange }: DateSelectorProps) 
   }
 
   const canGoNext = () => {
+    const now = new Date()
     const selected = parseISO(selectedDate)
-    const now = new Date()
-    // Get current date in Chile timezone
-    const chileNow = new Date(now.toLocaleString('en-US', { timeZone: 'America/Santiago' }))
-    const chileToday = new Date(chileNow.getFullYear(), chileNow.getMonth(), chileNow.getDate())
-    const selectedDay = new Date(selected.getFullYear(), selected.getMonth(), selected.getDate())
-    return selectedDay < chileToday
+
+    // Compare dates in Chile timezone
+    const nowDate = formatInTimeZone(now, CHILE_TIMEZONE, 'yyyy-MM-dd')
+    const selectedDateStr = formatInTimeZone(selected, CHILE_TIMEZONE, 'yyyy-MM-dd')
+
+    return selectedDateStr < nowDate
   }
 
-  const hasDateMessages = (dateStr: string) => {
-    return availableDates.some(d => d.date === dateStr)
-  }
-
-  const isTodayInChile = (date: Date) => {
+  const isTodayInChile = (date: Date | string) => {
     const now = new Date()
-    const chileNow = new Date(now.toLocaleString('en-US', { timeZone: 'America/Santiago' }))
-    const chileToday = new Date(chileNow.getFullYear(), chileNow.getMonth(), chileNow.getDate())
-    const compareDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
-    return compareDate.getTime() === chileToday.getTime()
+    const nowDateStr = formatInTimeZone(now, CHILE_TIMEZONE, 'yyyy-MM-dd')
+
+    let compareDateStr: string
+    if (typeof date === 'string') {
+      compareDateStr = date
+    } else {
+      compareDateStr = formatInTimeZone(date, CHILE_TIMEZONE, 'yyyy-MM-dd')
+    }
+
+    return compareDateStr === nowDateStr
   }
 
   const getDisplayDate = () => {
-    const date = new Date(selectedDate)
+    const date = parseISO(selectedDate)
     if (isTodayInChile(date)) return 'Hoy'
     return format(date, 'dd MMM yyyy')
   }
