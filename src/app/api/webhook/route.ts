@@ -7,9 +7,15 @@ const EVOLUTION_API_KEY = process.env.EVOLUTION_API_KEY
 
 // Global webhook verification using single API key for all instances
 export async function POST(request: NextRequest) {
+  console.log('[Webhook] ====================================')
+  console.log('[Webhook] Received webhook request')
+  console.log('[Webhook] Headers:', Object.fromEntries(request.headers.entries()))
+
   try {
     // Verify global API key
     const apiKey = request.headers.get('apikey') || request.headers.get('x-api-key')
+    console.log('[Webhook] API Key received:', apiKey ? `${apiKey.substring(0, 10)}...` : 'none')
+    console.log('[Webhook] EVOLUTION_API_KEY configured:', !!EVOLUTION_API_KEY)
 
     if (!EVOLUTION_API_KEY) {
       console.error('[Webhook] EVOLUTION_API_KEY not configured')
