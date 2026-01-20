@@ -68,12 +68,14 @@ export async function POST(request: NextRequest) {
 
     // Set webhook for the instance
     const webhookUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/webhook`
+    console.log('[Instance] Configuring webhook URL:', webhookUrl)
 
     try {
-      await setWebhook(instanceName, webhookUrl)
-      console.log('[Instance] Webhook configured successfully')
+      const webhookResult = await setWebhook(instanceName, webhookUrl)
+      console.log('[Instance] Webhook configured successfully:', webhookResult)
     } catch (error: any) {
       console.error('[Instance] Failed to set webhook:', error)
+      console.error('[Instance] Error details:', error.message, error.statusCode)
       // Webhook failure is not blocking - instance will work without it
       // Messages just won't be received automatically
     }
@@ -288,6 +290,59 @@ export async function PUT(request: NextRequest) {
     console.error('[API Instance PUT] Error:', error)
     return NextResponse.json(
       { error: 'Failed to refresh instance status' },
+      { status: 500 }
+    )
+  }
+}
+
+/**
+ * PATCH /api/instance/webhook - Reconfigure webhook for current instance
+ */
+export async function PATCH(request: NextRequest) {
+  try {
+    const session = await auth()
+
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { instanceName: true }
+    })
+
+    if (!user?.instanceName) {
+      return NextResponse.json(
+        { error: 'No instance found' },
+        { status: 404 }
+      )
+    }
+
+    // Set webhook for the instance
+    const webhookUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/webhook`
+    console.log('[Instance] Reconfiguring webhook URL:', webhookUrl, 'for instance:', user.instanceName)
+
+    try {
+      const webhookResult = await setWebhook(user.instanceName, webhookUrl)
+      console.log('[Instance] Webhook reconfigured successfully:', webhookResult)
+
+      return NextResponse.json({
+        message: 'Webhook reconfigured successfully',
+        webhookUrl,
+        result: webhookResult
+      })
+    } catch (error: any) {
+      console.error('[Instance] Failed to reconfigure webhook:', error)
+      return NextResponse.json(
+        { error: `Failed to reconfigure webhook: ${error.message}` },
+        { status: 500 }
+      )
+    }
+
+  } catch (error) {
+    console.error('[API Instance PATCH] Error:', error)
+    return NextResponse.json(
+      { error: 'Failed to reconfigure webhook' },
       { status: 500 }
     )
   }
