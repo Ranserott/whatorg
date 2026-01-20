@@ -102,11 +102,17 @@ export function extractMessageData(
   const content = getMessageContent(data)
   const senderName = getSenderName(data)
 
-  // Use message timestamp from webhook (Unix timestamp in seconds)
-  // If not available, Prisma will use the default (current time)
+  // Use message timestamp from webhook (Unix timestamp)
+  // Evolution API v2 sends timestamp in milliseconds, detect format automatically
   let createdAt: Date | undefined
   if (data.messageTimestamp) {
-    createdAt = new Date(data.messageTimestamp * 1000) // Convert seconds to milliseconds
+    // If timestamp is in seconds (< 10000000000), convert to milliseconds
+    // If timestamp is already in milliseconds, use directly
+    const timestamp = data.messageTimestamp < 10000000000
+      ? data.messageTimestamp * 1000
+      : data.messageTimestamp
+    createdAt = new Date(timestamp)
+    console.log('[MessageProcessor] messageTimestamp:', data.messageTimestamp, '-> converted:', timestamp, '-> date:', createdAt.toISOString())
   }
 
   return {
