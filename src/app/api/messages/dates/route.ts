@@ -11,6 +11,12 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // Debug: log server timezone
+    console.log('[API Dates] Server timezone:', Intl.DateTimeFormat().resolvedOptions().timeZone)
+    console.log('[API Dates] TZ env var:', process.env.TZ)
+    console.log('[API Dates] Current date (server):', new Date().toISOString())
+    console.log('[API Dates] Current date (Chile):', new Date().toLocaleString('es-CL', { timeZone: 'America/Santiago' }))
+
     // Get all distinct dates with messages for this user
     const messages = await prisma.message.findMany({
       where: {
