@@ -114,14 +114,16 @@ export async function setWebhook(instanceName: string, webhookUrl: string): Prom
       'apikey': EVOLUTION_API_KEY!
     },
     body: JSON.stringify({
+      enabled: true,
       url: webhookUrl,
-      events: ['messages.upsert'],
-      webhook_by_events: true
+      webhook_by_events: false,
+      events: ['MESSAGES_UPSERT']
     })
   })
 
   if (!response.ok) {
-    throw new EvolutionApiError(`Failed to set webhook: ${response.status}`, response.status)
+    const errorText = await response.text()
+    throw new EvolutionApiError(`Failed to set webhook: ${response.status} - ${errorText}`, response.status)
   }
 
   return response.json()
