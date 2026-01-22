@@ -105,6 +105,7 @@ export async function getConnectionState(instanceName: string): Promise<Connecti
 
 /**
  * Set webhook for an instance
+ * Format: webhook object must be nested inside the request body
  */
 export async function setWebhook(instanceName: string, webhookUrl: string): Promise<WebhookResponse> {
   const response = await fetch(`${EVOLUTION_API_URL}/webhook/set/${instanceName}`, {
@@ -114,10 +115,12 @@ export async function setWebhook(instanceName: string, webhookUrl: string): Prom
       'apikey': EVOLUTION_API_KEY!
     },
     body: JSON.stringify({
-      enabled: true,
-      url: webhookUrl,
-      webhook_by_events: false,
-      events: ['MESSAGES_UPSERT']
+      webhook: {
+        enabled: true,
+        url: webhookUrl,
+        webhook_by_events: false,
+        events: ['MESSAGES_UPSERT']
+      }
     })
   })
 
