@@ -4,6 +4,8 @@ import { useEffect, useState, useRef } from 'react'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { format, isToday, isYesterday } from 'date-fns'
 import type { MessageType, Direction } from '@/types/evolution-api'
 
@@ -27,6 +29,8 @@ interface ChatViewProps {
 export function ChatView({ contact, contactName, selectedDate }: ChatViewProps) {
   const [messages, setMessages] = useState<Message[]>([])
   const [loading, setLoading] = useState(true)
+  const [sending, setSending] = useState(false)
+  const [messageText, setMessageText] = useState('')
   const scrollRef = useRef<HTMLDivElement>(null)
 
   const fetchMessages = async () => {
@@ -101,6 +105,57 @@ export function ChatView({ contact, contactName, selectedDate }: ChatViewProps) 
       case 'LOCATION': return '📍'
       case 'CONTACT': return '👤'
       default: return null
+    }
+  }
+
+  const sendMessage = async () => {
+    if (!messageText.trim() || sending) return
+
+    try {
+      setSending(true)
+
+      const response = await fetch('/api/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          number: contact,
+          text: messageText
+        })
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to send message')
+      }
+
+      const data = await response.json()
+
+      // Add the new message to the list
+      setMessages(prev => [...prev, data.message])
+
+      // Clear the input
+      setMessageText('')
+
+      // Scroll to bottom
+      setTimeout(() => {
+        if (scrollRef.current) {
+          scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+        }
+      }, 100)
+    } catch (error) {
+      console.error('Failed to send message:', error)
+      alert('Error al enviar mensaje: ' + (error instanceof Error ? error.message : 'Unknown error'))
+    } finally {
+      setSending(false)
+    }
+  }
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      sendMessage()
     }
   }
 
@@ -203,6 +258,28 @@ export function ChatView({ contact, contactName, selectedDate }: ChatViewProps) 
           </div>
         )}
       </ScrollArea>
+
+      {/* Message Input */}
+      <div className="p-4 border-t bg-white/80 backdrop-blur-sm shadow-sm">
+        <div className="flex gap-2">
+          <Input
+            type="text"
+            placeholder="Escribe un mensaje..."
+            value={messageText}
+            onChange={(e) => setMessageText(e.target.value)}
+            onKeyPress={handleKeyPress}
+            disabled={sending}
+            className="flex-1"
+          />
+          <Button
+            onClick={sendMessage}
+            disabled={sending || !messageText.trim()}
+            className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
+          >
+            {sending ? 'Enviando...' : 'Enviar'}
+          </Button>
+        </div>
+      </div>
     </div>
   )
 }

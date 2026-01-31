@@ -181,3 +181,56 @@ export async function fetchInstances(): Promise<any> {
 
   return response.json()
 }
+
+export interface SendTextMessageResponse {
+  key: {
+    remoteJid: string
+    fromMe: boolean
+    id: string
+  }
+  message: {
+    extendedTextMessage?: {
+      text: string
+    }
+    conversation?: string
+  }
+  messageTimestamp: string
+  status: string
+}
+
+export interface SendTextMessageOptions {
+  number: string
+  text: string
+  delay?: number
+  linkPreview?: boolean
+}
+
+/**
+ * Send a text message through Evolution API v2
+ * POST /message/sendText/{instance}
+ */
+export async function sendTextMessage(
+  instanceName: string,
+  options: SendTextMessageOptions
+): Promise<SendTextMessageResponse> {
+  const response = await fetch(`${EVOLUTION_API_URL}/message/sendText/${instanceName}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': EVOLUTION_API_KEY!
+    },
+    body: JSON.stringify({
+      number: options.number,
+      text: options.text,
+      delay: options.delay || 0,
+      linkPreview: options.linkPreview !== undefined ? options.linkPreview : false
+    })
+  })
+
+  if (!response.ok) {
+    const errorText = await response.text()
+    throw new EvolutionApiError(`Failed to send message: ${response.status} - ${errorText}`, response.status)
+  }
+
+  return response.json()
+}
