@@ -35,15 +35,16 @@ export async function GET(request: NextRequest) {
       ]
     }
 
-    // Group contacts and get message counts
+    // Group contacts by senderNumber only to avoid duplicates
     const contacts = await prisma.message.groupBy({
-      by: ['senderNumber', 'senderName'],
+      by: ['senderNumber'],
       where: whereClause,
       _count: {
         id: true
       },
       _max: {
-        createdAt: true
+        createdAt: true,
+        senderName: true // Get the latest/lexicographically last name available
       },
       orderBy: {
         _max: {
@@ -52,12 +53,29 @@ export async function GET(request: NextRequest) {
       }
     })
 
+    // Fetch contact statuses
+    const contactStatuses = await prisma.contact.findMany({
+      where: {
+        userId: session.user.id,
+        phone: {
+          in: contacts.map(c => c.senderNumber)
+        }
+      },
+      select: {
+        phone: true,
+        status: true
+      }
+    })
+
+    const statusMap = new Map(contactStatuses.map(c => [c.phone, c.status]))
+
     // Transform to response format
     const formattedContacts = contacts.map((contact) => ({
       senderNumber: contact.senderNumber,
-      senderName: contact.senderName,
+      senderName: contact._max.senderName, // Use the aggregated name
       messageCount: contact._count.id,
-      lastMessageAt: contact._max.createdAt
+      lastMessageAt: contact._max.createdAt,
+      status: statusMap.get(contact.senderNumber) || 'OPEN'
     }))
 
     return NextResponse.json({

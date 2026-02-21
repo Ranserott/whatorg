@@ -62,7 +62,20 @@ export function getMediaUrl(data: WebhookData): string | null {
   if (!message) return null
 
   // Media URLs from Evolution API
-  if (message.imageMessage?.url) return message.imageMessage.url
+  // Check for Image
+  if (message.imageMessage) {
+    if (message.imageMessage.url) return message.imageMessage.url
+    
+    // Fallback to thumbnail or base64 if available (Evolution API v2)
+    const imgMsg = message.imageMessage as any
+    if (imgMsg.base64) {
+      return `data:image/jpeg;base64,${imgMsg.base64}`
+    }
+    if (imgMsg.jpegThumbnail) {
+      return `data:image/jpeg;base64,${imgMsg.jpegThumbnail}`
+    }
+  }
+
   if (message.audioMessage?.url) return message.audioMessage.url
   if (message.videoMessage?.url) return message.videoMessage.url
   if (message.documentMessage?.url) return message.documentMessage.url

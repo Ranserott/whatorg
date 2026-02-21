@@ -5,14 +5,16 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
-import { Search, User } from 'lucide-react'
+import { Search, User, CheckCircle2, XCircle } from 'lucide-react'
 import { format, isToday, isYesterday } from 'date-fns'
+import { formatPhoneNumber } from '@/lib/utils'
 
 interface Contact {
   senderNumber: string
   senderName: string | null
   lastMessageAt: string
   messageCount: number
+  status?: string
 }
 
 interface ChatSidebarProps {
@@ -48,7 +50,7 @@ export function ChatSidebar({
 
   useEffect(() => {
     fetchContacts()
-  }, [selectedDate])
+  }, [selectedDate]) // Note: The parent component forces re-render via key prop when status changes
 
   // Debounce search
   useEffect(() => {
@@ -67,7 +69,9 @@ export function ChatSidebar({
         .toUpperCase()
         .slice(0, 2)
     }
-    return phone.slice(0, 2)
+    // If no name, use phone number digits
+    const digits = phone.replace(/\D/g, '')
+    return digits.slice(-2)
   }
 
   const formatTime = (dateStr: string) => {
@@ -121,16 +125,24 @@ export function ChatSidebar({
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2">
-                    <p className={`font-medium truncate ${selectedContact === contact.senderNumber ? 'text-blue-700' : 'text-slate-800'}`}>
-                      {contact.senderName || contact.senderNumber}
-                    </p>
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      {contact.status === 'SOLD' && (
+                        <CheckCircle2 className="h-3.5 w-3.5 text-green-600 shrink-0" />
+                      )}
+                      {contact.status === 'DISMISSED' && (
+                        <XCircle className="h-3.5 w-3.5 text-red-600 shrink-0" />
+                      )}
+                      <p className={`font-medium truncate ${selectedContact === contact.senderNumber ? 'text-blue-700' : 'text-slate-800'}`}>
+                        {contact.senderName || formatPhoneNumber(contact.senderNumber)}
+                      </p>
+                    </div>
                     <span className="text-xs text-slate-500 whitespace-nowrap">
                       {formatTime(contact.lastMessageAt)}
                     </span>
                   </div>
                   <div className="flex items-center justify-between gap-2">
                     <p className="text-sm text-slate-500 truncate">
-                      {contact.senderNumber}
+                      {formatPhoneNumber(contact.senderNumber)}
                     </p>
                     <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700 hover:bg-blue-200">
                       {contact.messageCount}

@@ -7,6 +7,7 @@ import { ChatSidebar } from '@/components/chat-sidebar'
 import { ChatView } from '@/components/chat-view'
 import { DateSelector } from '@/components/date-selector'
 import { SignOutButton } from '@/components/sign-out-button'
+import { DailyReportDialog } from '@/components/daily-report-dialog'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
@@ -24,6 +25,8 @@ export default function HomePage() {
   })
   const [selectedContact, setSelectedContact] = useState<string | null>(null)
   const [selectedContactName, setSelectedContactName] = useState<string | null>(null)
+  const [selectedContactStatus, setSelectedContactStatus] = useState<string | null>(null)
+  const [refreshTrigger, setRefreshTrigger] = useState(0)
 
   const handleContactSelect = async (contactNumber: string) => {
     setSelectedContact(contactNumber)
@@ -35,9 +38,15 @@ export default function HomePage() {
       const data = await response.json()
       const contact = data.contacts?.find((c: any) => c.senderNumber === contactNumber)
       setSelectedContactName(contact?.senderName || null)
+      setSelectedContactStatus(contact?.status || 'OPEN')
     } catch (error) {
-      console.error('Failed to fetch contact name:', error)
+      console.error('Failed to fetch contact info:', error)
     }
+  }
+
+  const handleStatusChange = (newStatus: string) => {
+    setSelectedContactStatus(newStatus)
+    setRefreshTrigger(prev => prev + 1)
   }
 
   const getInitials = (name: string | null, email: string) => {
@@ -69,6 +78,7 @@ export default function HomePage() {
               setSelectedContactName(null)
             }}
           />
+          <DailyReportDialog />
         </div>
 
         <div className="flex items-center gap-3">
@@ -126,6 +136,7 @@ export default function HomePage() {
         {/* Sidebar */}
         <aside className="w-80 flex-shrink-0">
           <ChatSidebar
+            key={refreshTrigger}
             selectedDate={selectedDate}
             selectedContact={selectedContact}
             onContactSelect={handleContactSelect}
@@ -138,6 +149,8 @@ export default function HomePage() {
             <ChatView
               contact={selectedContact}
               contactName={selectedContactName}
+              initialStatus={selectedContactStatus}
+              onStatusChange={handleStatusChange}
               selectedDate={selectedDate}
             />
           ) : (

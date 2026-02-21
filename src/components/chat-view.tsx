@@ -6,7 +6,9 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Send, Phone, Video, MoreVertical, Image as ImageIcon, AlertCircle, CheckCircle2, XCircle } from 'lucide-react'
 import { format, isToday, isYesterday } from 'date-fns'
+import { formatPhoneNumber } from '@/lib/utils'
 import type { MessageType, Direction } from '@/types/evolution-api'
 
 interface Message {
@@ -24,15 +26,46 @@ interface Message {
 interface ChatViewProps {
   contact: string
   contactName: string | null
+  initialStatus?: string | null
+  onStatusChange?: (status: string) => void
   selectedDate: string
 }
 
-export function ChatView({ contact, contactName, selectedDate }: ChatViewProps) {
+export function ChatView({ contact, contactName, initialStatus, onStatusChange, selectedDate }: ChatViewProps) {
   const [messages, setMessages] = useState<Message[]>([])
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const [messageText, setMessageText] = useState('')
+  const [status, setStatus] = useState<string>(initialStatus || 'OPEN')
+  const [updatingStatus, setUpdatingStatus] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    setStatus(initialStatus || 'OPEN')
+  }, [initialStatus])
+
+  const updateStatus = async (newStatus: string) => {
+    // If clicking the same status, toggle back to OPEN
+    const statusToSet = status === newStatus ? 'OPEN' : newStatus
+    
+    try {
+      setUpdatingStatus(true)
+      const response = await fetch('/api/contacts/status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: contact, status: statusToSet })
+      })
+      
+      if (response.ok) {
+        setStatus(statusToSet)
+        onStatusChange?.(statusToSet)
+      }
+    } catch (error) {
+      console.error('Failed to update status:', error)
+    } finally {
+      setUpdatingStatus(false)
+    }
+  }
 
   const fetchMessages = async () => {
     try {
@@ -72,7 +105,9 @@ export function ChatView({ contact, contactName, selectedDate }: ChatViewProps) 
         .toUpperCase()
         .slice(0, 2)
     }
-    return phone.slice(0, 2)
+    // If no name, use phone number digits
+    const digits = phone.replace(/\D/g, '')
+    return digits.slice(-2)
   }
 
   const formatTime = (dateStr: string) => {
@@ -121,6 +156,16 @@ export function ChatView({ contact, contactName, selectedDate }: ChatViewProps) 
               alt="Imagen"
               className="max-w-full h-auto cursor-pointer hover:opacity-90 transition-opacity"
               onClick={() => window.open(msg.mediaUrl!, '_blank')}
+              onError={(e) => {
+                e.currentTarget.style.display = 'none'
+                const parent = e.currentTarget.parentElement
+                if (parent) {
+                  const div = document.createElement('div')
+                  div.className = 'p-8 text-center bg-slate-100 text-slate-400 text-sm'
+                  div.textContent = 'Imagen no disponible'
+                  parent.appendChild(div)
+                }
+              }}
             />
           </div>
         )
@@ -232,15 +277,41 @@ export function ChatView({ contact, contactName, selectedDate }: ChatViewProps) 
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-blue-50/50 to-indigo-50/50">
       {/* Header */}
-      <div className="flex items-center gap-3 p-4 border-b bg-white/80 backdrop-blur-sm shadow-sm">
-        <Avatar className="h-10 w-10 ring-2 ring-blue-100">
-          <AvatarFallback className="bg-gradient-to-br from-blue-500 to-blue-600 text-white">
-            {getInitials(contactName, contact)}
-          </AvatarFallback>
-        </Avatar>
-        <div>
-          <p className="font-semibold text-slate-800">{contactName || contact}</p>
-          <p className="text-sm text-slate-500">{contact}</p>
+      <div className="flex items-center justify-between p-4 border-b bg-white/80 backdrop-blur-sm shadow-sm">
+        <div className="flex items-center gap-3">
+          <Avatar className="h-10 w-10 ring-2 ring-blue-100">
+            <AvatarFallback className="bg-gradient-to-br from-blue-500 to-blue-600 text-white">
+              {getInitials(contactName, contact)}
+            </AvatarFallback>
+          </Avatar>
+          <div>
+            <p className="font-semibold text-slate-800">{contactName || formatPhoneNumber(contact)}</p>
+            <p className="text-sm text-slate-500">{formatPhoneNumber(contact)}</p>
+          </div>
+        </div>
+
+        {/* Status Actions */}
+        <div className="flex items-center gap-2">
+          <Button 
+            variant={status === 'SOLD' ? 'default' : 'outline'}
+            size="sm"
+            className={status === 'SOLD' ? 'bg-green-600 hover:bg-green-700 text-white' : 'text-green-600 border-green-200 hover:bg-green-50'}
+            onClick={() => updateStatus('SOLD')}
+            disabled={updatingStatus}
+          >
+            <CheckCircle2 className="w-4 h-4 mr-1" />
+            Vendido
+          </Button>
+          <Button 
+            variant={status === 'DISMISSED' ? 'default' : 'outline'}
+            size="sm"
+            className={status === 'DISMISSED' ? 'bg-red-600 hover:bg-red-700 text-white' : 'text-red-600 border-red-200 hover:bg-red-50'}
+            onClick={() => updateStatus('DISMISSED')}
+            disabled={updatingStatus}
+          >
+            <XCircle className="w-4 h-4 mr-1" />
+            Anulado
+          </Button>
         </div>
       </div>
 
