@@ -71,6 +71,7 @@ export interface CreateMessageData {
   instanceName: string
   type: MessageType
   direction: Direction
+  mediaUrl?: string | null
   createdAt?: Date
 }
 
@@ -84,6 +85,7 @@ export interface DashboardMessage {
   instanceName: string
   type: MessageType
   direction: Direction
+  mediaUrl: string | null
   createdAt: Date
 }
 

@@ -38,17 +38,13 @@ export function getMessageContent(data: WebhookData): string | null {
   if (message.extendedTextMessage?.text) return message.extendedTextMessage.text
 
   // Media with captions
-  if (message.imageMessage?.caption) return `[IMAGE] ${message.imageMessage.caption}`
-  if (message.videoMessage?.caption) return `[VIDEO] ${message.videoMessage.caption}`
-  if (message.documentMessage) {
-    const title = message.documentMessage.title || 'Document'
-    const caption = message.documentMessage.caption || ''
-    return `[DOCUMENT] ${title}${caption ? ': ' + caption : ''}`
-  }
+  if (message.imageMessage?.caption) return message.imageMessage.caption
+  if (message.videoMessage?.caption) return message.videoMessage.caption
+  if (message.documentMessage?.caption) return message.documentMessage.caption
 
-  // Other media types
-  if (message.audioMessage) return '[AUDIO]'
-  if (message.stickerMessage) return '[STICKER]'
+  // Other media types - return null so we only show the media
+  if (message.audioMessage) return null
+  if (message.stickerMessage) return null
   if (message.locationMessage) {
     const { name, degreesLatitude, degreesLongitude } = message.locationMessage
     return `[LOCATION] ${name} (${degreesLatitude}, ${degreesLongitude})`
@@ -56,6 +52,21 @@ export function getMessageContent(data: WebhookData): string | null {
   if (message.contactMessage) {
     return `[CONTACT] ${message.contactMessage.displayName}`
   }
+
+  return null
+}
+
+export function getMediaUrl(data: WebhookData): string | null {
+  const message = data.message
+
+  if (!message) return null
+
+  // Media URLs from Evolution API
+  if (message.imageMessage?.url) return message.imageMessage.url
+  if (message.audioMessage?.url) return message.audioMessage.url
+  if (message.videoMessage?.url) return message.videoMessage.url
+  if (message.documentMessage?.url) return message.documentMessage.url
+  if (message.stickerMessage?.url) return message.stickerMessage.url
 
   return null
 }
@@ -101,6 +112,7 @@ export function extractMessageData(
   const direction = getDirection(data)
   const content = getMessageContent(data)
   const senderName = getSenderName(data)
+  const mediaUrl = getMediaUrl(data)
 
   // Use message timestamp from webhook (Unix timestamp)
   // Evolution API v2 sends timestamp in milliseconds, detect format automatically
@@ -123,6 +135,7 @@ export function extractMessageData(
     instanceName,
     type,
     direction,
+    mediaUrl,
     createdAt
   }
 }

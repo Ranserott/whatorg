@@ -17,6 +17,7 @@ interface Message {
   senderNumber: string
   type: MessageType
   direction: Direction
+  mediaUrl: string | null
   createdAt: string
 }
 
@@ -105,6 +106,75 @@ export function ChatView({ contact, contactName, selectedDate }: ChatViewProps) 
       case 'LOCATION': return '📍'
       case 'CONTACT': return '👤'
       default: return null
+    }
+  }
+
+  const renderMediaContent = (msg: Message) => {
+    if (!msg.mediaUrl) return null
+
+    switch (msg.type) {
+      case 'IMAGE':
+        return (
+          <div className="mt-2 rounded-lg overflow-hidden">
+            <img
+              src={msg.mediaUrl}
+              alt="Imagen"
+              className="max-w-full h-auto cursor-pointer hover:opacity-90 transition-opacity"
+              onClick={() => window.open(msg.mediaUrl!, '_blank')}
+            />
+          </div>
+        )
+
+      case 'VIDEO':
+        return (
+          <div className="mt-2 rounded-lg overflow-hidden">
+            <video
+              src={msg.mediaUrl}
+              controls
+              className="max-w-full h-auto"
+            />
+          </div>
+        )
+
+      case 'AUDIO':
+        return (
+          <div className="mt-2">
+            <audio
+              src={msg.mediaUrl}
+              controls
+              className="w-full"
+            />
+          </div>
+        )
+
+      case 'DOCUMENT':
+        return (
+          <div className="mt-2">
+            <a
+              href={msg.mediaUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 p-3 bg-white/10 rounded-lg hover:bg-white/20 transition-colors"
+            >
+              <span className="text-lg">📄</span>
+              <span className="text-sm underline">Ver documento</span>
+            </a>
+          </div>
+        )
+
+      case 'STICKER':
+        return (
+          <div className="mt-2 rounded-lg overflow-hidden max-w-[150px]">
+            <img
+              src={msg.mediaUrl}
+              alt="Sticker"
+              className="w-full h-auto"
+            />
+          </div>
+        )
+
+      default:
+        return null
     }
   }
 
@@ -222,7 +292,7 @@ export function ChatView({ contact, contactName, selectedDate }: ChatViewProps) 
                       }`}
                     >
                       {/* Type Badge for non-text messages */}
-                      {msg.type !== 'TEXT' && (
+                      {msg.type !== 'TEXT' && !msg.mediaUrl && (
                         <div className="flex items-center gap-2 mb-1">
                           <span className="text-sm">
                             {getMessageTypeIcon(msg.type)}
@@ -233,7 +303,10 @@ export function ChatView({ contact, contactName, selectedDate }: ChatViewProps) 
                         </div>
                       )}
 
-                      {/* Content */}
+                      {/* Media Content */}
+                      {renderMediaContent(msg)}
+
+                      {/* Content (text caption) */}
                       {msg.content && (
                         <p className="text-sm whitespace-pre-wrap break-words leading-relaxed">
                           {msg.content}
