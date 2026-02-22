@@ -7,11 +7,10 @@ import { ChatSidebar } from '@/components/chat-sidebar'
 import { ChatView } from '@/components/chat-view'
 import { DateSelector } from '@/components/date-selector'
 import { SignOutButton } from '@/components/sign-out-button'
-import { DailyReportDialog } from '@/components/daily-report-dialog'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
-import { MessageSquare, User, Shield, Settings, LogOut } from 'lucide-react'
+import { MessageSquare, User, Shield, Settings, LogOut, BarChart3 } from 'lucide-react'
 import { formatInTimeZone } from 'date-fns-tz'
 
 export const dynamic = 'force-dynamic'
@@ -78,7 +77,12 @@ export default function HomePage() {
               setSelectedContactName(null)
             }}
           />
-          <DailyReportDialog />
+          <Link href="/reports">
+            <Button variant="ghost" className="text-white hover:bg-white/20 gap-2">
+              <BarChart3 className="h-4 w-4" />
+              <span className="hidden sm:inline">Reportes</span>
+            </Button>
+          </Link>
         </div>
 
         <div className="flex items-center gap-3">
