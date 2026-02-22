@@ -38,7 +38,15 @@ export async function GET(request: NextRequest) {
     // Group contacts by senderNumber only to avoid duplicates
     const contacts = await prisma.message.groupBy({
       by: ['senderNumber'],
-      where: whereClause,
+      where: {
+        ...whereClause,
+        // Exclude WhatsApp groups (format: groupId@g.us)
+        senderNumber: {
+          not: {
+            contains: '@g.us'
+          }
+        }
+      },
       _count: {
         id: true
       },
