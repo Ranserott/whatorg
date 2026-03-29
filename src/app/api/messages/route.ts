@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { startOfDay, endOfDay, parseISO } from 'date-fns'
+import { startOfDay, endOfDay } from 'date-fns'
+import { toZonedTime, fromZonedTime } from 'date-fns-tz'
 import { sendTextMessage } from '@/lib/evolution-api'
 
 export async function GET(request: NextRequest) {
@@ -24,12 +25,18 @@ export async function GET(request: NextRequest) {
       userId: session.user.id
     }
 
-    // Date filter
+    // Date filter - interpret dateParam as Chile timezone
     if (dateParam) {
-      const targetDate = parseISO(dateParam)
+      // Parse as zoned time (Chile) then convert to UTC for query
+      const chileDate = new Date(dateParam + 'T00:00:00')
+      const zonedTime = toZonedTime(chileDate, 'America/Santiago')
+      const startChile = startOfDay(zonedTime)
+      const endChile = endOfDay(zonedTime)
+
+      // Convert Chile local times to UTC for database query
       whereClause.createdAt = {
-        gte: startOfDay(targetDate),
-        lte: endOfDay(targetDate)
+        gte: fromZonedTime(startChile, 'America/Santiago'),
+        lte: fromZonedTime(endChile, 'America/Santiago')
       }
     }
 

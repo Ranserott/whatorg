@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { format } from 'date-fns'
+import { toZonedTime } from 'date-fns-tz'
 
 export async function GET() {
   try {
@@ -11,13 +12,7 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Debug: log server timezone
-    console.log('[API Dates] Server timezone:', Intl.DateTimeFormat().resolvedOptions().timeZone)
-    console.log('[API Dates] TZ env var:', process.env.TZ)
-    console.log('[API Dates] Current date (server):', new Date().toISOString())
-    console.log('[API Dates] Current date (Chile):', new Date().toLocaleString('es-CL', { timeZone: 'America/Santiago' }))
-
-    // Get all distinct dates with messages for this user
+    // Get all messages for this user to group by date
     const messages = await prisma.message.findMany({
       where: {
         userId: session.user.id
@@ -27,15 +22,16 @@ export async function GET() {
       },
       orderBy: {
         createdAt: 'desc'
-      },
-      distinct: ['createdAt']
+      }
     })
 
-    // Group by date and count messages
+    // Group by date (in Chile timezone) and count messages
     const dateMap = new Map<string, number>()
 
     for (const message of messages) {
-      const dateKey = format(new Date(message.createdAt), 'yyyy-MM-dd')
+      // Convert UTC to Chile timezone for grouping
+      const chileDate = toZonedTime(new Date(message.createdAt), 'America/Santiago')
+      const dateKey = format(chileDate, 'yyyy-MM-dd')
       dateMap.set(dateKey, (dateMap.get(dateKey) || 0) + 1)
     }
 

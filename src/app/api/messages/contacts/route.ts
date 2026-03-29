@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { startOfDay, endOfDay, parseISO } from 'date-fns'
+import { startOfDay, endOfDay } from 'date-fns'
+import { toZonedTime, fromZonedTime } from 'date-fns-tz'
 
 export async function GET(request: NextRequest) {
   try {
@@ -20,11 +21,22 @@ export async function GET(request: NextRequest) {
       userId: session.user.id
     }
 
-    // Date filter - defaults to today if not provided
-    const targetDate = dateParam ? parseISO(dateParam) : new Date()
+    // Date filter - interpret dateParam as Chile timezone, defaults to today Chile
+    let targetDate: Date
+    if (dateParam) {
+      const chileDate = new Date(dateParam + 'T00:00:00')
+      targetDate = toZonedTime(chileDate, 'America/Santiago')
+    } else {
+      targetDate = toZonedTime(new Date(), 'America/Santiago')
+    }
+
+    const startChile = startOfDay(targetDate)
+    const endChile = endOfDay(targetDate)
+
+    // Convert Chile local times to UTC for database query
     whereClause.createdAt = {
-      gte: startOfDay(targetDate),
-      lte: endOfDay(targetDate)
+      gte: fromZonedTime(startChile, 'America/Santiago'),
+      lte: fromZonedTime(endChile, 'America/Santiago')
     }
 
     // Search filter (by name or phone number)
